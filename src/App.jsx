@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import TaskList from "./components/TaskList";
 
 function App() {
 
@@ -7,21 +8,23 @@ function App() {
 
   // Load tasks from localStorage when app starts
   useEffect(() => {
+
     const storedTodos = JSON.parse(localStorage.getItem("orbitTodos")) || [];
     const today = new Date().toDateString();
 
-    // remove completed tasks from previous days
-    const filteredTodos = storedTodos.filter(todo =>
-      !todo.completed || todo.completedDate === today
+    const filteredTodos = storedTodos.filter(
+      (todo) => !todo.completed || todo.completedDate === today
     );
 
     setTodos(filteredTodos);
+
   }, []);
 
   // Save tasks whenever todos change
   useEffect(() => {
     localStorage.setItem("orbitTodos", JSON.stringify(todos));
   }, [todos]);
+
 
   function addTask() {
 
@@ -30,6 +33,7 @@ function App() {
     setTodos([
       ...todos,
       {
+        id: Date.now(),
         text: task,
         completed: false,
         completedDate: null
@@ -37,85 +41,115 @@ function App() {
     ]);
 
     setTask("");
+
   }
 
-  function deleteTask(index){
-    const updatedTodos = todos.filter((todo, i) => i !== index);
-    setTodos(updatedTodos);
+
+  function deleteTask(id) {
+
+    setTodos(
+      todos.filter((todo) => todo.id !== id)
+    );
+
   }
 
-  function toggleTask(index){
-    const updatedTodos = todos.map((todo, i) => {
-      if(i === index){
+
+  function toggleTask(id) {
+
+    const updatedTodos = todos.map((todo) => {
+
+      if (todo.id === id) {
+
         return {
           ...todo,
           completed: !todo.completed,
           completedDate: todo.completed ? null : new Date().toDateString()
         };
+
       }
+
       return todo;
+
     });
 
     setTodos(updatedTodos);
+
   }
 
-  // Remaining tasks counter
-  const remainingTasks = todos.filter(todo => !todo.completed).length;
 
-  return(
-    <div>
-      <h1>Orbit To-do App</h1>
+  const activeTodos = todos.filter(todo => !todo.completed);
+  const completedTodos = todos.filter(todo => todo.completed);
+
+  const remainingTasks = activeTodos.length;
+
+
+  return (
+
+    <div className="app-container">
+
+      <h1>Orbit To-Do</h1>
       <p>Organize your day with Orbit</p>
 
-      <input
-        type="text"
-        placeholder="Enter task"
-        value={task}
-        onChange={(e) => setTask(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            addTask();
-          }
-        }}
-      />
 
-      <button onClick={addTask}>Add task</button>
+      <div className="input-container">
 
-      <h2>Complete all your tasks today</h2>
+        <input
+          type="text"
+          placeholder="Enter task"
+          value={task}
+          onChange={(e) => setTask(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") addTask();
+          }}
+        />
 
-      <p>{remainingTasks} tasks remaining</p>
+        <button onClick={addTask}>Add</button>
 
-      <ul>
-        {todos.map((todo, index) => (
-          <li
-            key={index}
-            onClick={() => toggleTask(index)}
-          >
+      </div>
 
-            <span
-              style={{
-                textDecoration: todo.completed ? "line-through" : "none",
-                cursor: "pointer"
-              }}
-            >
-              {todo.text}
-            </span>
 
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteTask(index);
-              }}
-            >
-              Delete
-            </button>
+      <p className="task-counter">
+        {remainingTasks} tasks remaining
+      </p>
 
-          </li>
-        ))}
-      </ul>
+
+      <h3>Tasks</h3>
+
+      {activeTodos.length === 0 ? (
+
+    <div className="empty-state">
+    No tasks yet
+    <p>Add your first task above</p>
+  </div>
+
+) : (
+
+  <TaskList
+    todos={activeTodos}
+    toggleTask={toggleTask}
+    deleteTask={deleteTask}
+  />
+
+)}
+
+
+      {completedTodos.length > 0 && (
+
+        <>
+          <h3 className="completed-title">Completed</h3>
+
+          <TaskList
+            todos={completedTodos}
+            toggleTask={toggleTask}
+            deleteTask={deleteTask}
+          />
+        </>
+
+      )}
 
     </div>
-  )
+
+  );
 }
 
 export default App;
