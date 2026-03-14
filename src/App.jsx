@@ -9,12 +9,33 @@ function App() {
 
     if (task.trim() === "") return;
 
-    setTodos([...todos, task]);
+    setTodos([
+      ...todos,
+      {
+        text: task,
+        completed: false
+      }
+    ]);
+
     setTask("");
   }
 
   function deleteTask(index){
     const updatedTodos = todos.filter((todo, i) => i !== index);
+    setTodos(updatedTodos);
+  }
+
+  function toggleTask(index){
+    const updatedTodos = todos.map((todo, i) => {
+      if(i === index){
+        return {
+          ...todo,
+          completed: !todo.completed
+        };
+      }
+      return todo;
+    });
+
     setTodos(updatedTodos);
   }
 
@@ -28,6 +49,11 @@ function App() {
         placeholder="Enter task"
         value={task}
         onChange={(e) => setTask(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            addTask();
+          }
+        }}
       />
 
       <button onClick={addTask}>Add task</button>
@@ -36,12 +62,33 @@ function App() {
 
       <ul>
         {todos.map((todo, index) => (
-          <li key={index}>
-            {todo}
-            <button onClick={() => deleteTask(index)}>Delete</button>
+          <li
+            key={index}
+            onClick={() => toggleTask(index)}
+          >
+
+            <span
+              style={{
+                textDecoration: todo.completed ? "line-through" : "none",
+                cursor: "pointer"
+              }}
+            >
+              {todo.text}
+            </span>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteTask(index);
+              }}
+            >
+              Delete
+            </button>
+
           </li>
         ))}
       </ul>
+
     </div>
   )
 }
