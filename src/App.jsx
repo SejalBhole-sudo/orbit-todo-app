@@ -1,9 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function App() {
 
   const [task, setTask] = useState("");
   const [todos, setTodos] = useState([]);
+
+  // Load tasks from localStorage when app starts
+  useEffect(() => {
+    const storedTodos = JSON.parse(localStorage.getItem("orbitTodos")) || [];
+    const today = new Date().toDateString();
+
+    // remove completed tasks from previous days
+    const filteredTodos = storedTodos.filter(todo =>
+      !todo.completed || todo.completedDate === today
+    );
+
+    setTodos(filteredTodos);
+  }, []);
+
+  // Save tasks whenever todos change
+  useEffect(() => {
+    localStorage.setItem("orbitTodos", JSON.stringify(todos));
+  }, [todos]);
 
   function addTask() {
 
@@ -13,7 +31,8 @@ function App() {
       ...todos,
       {
         text: task,
-        completed: false
+        completed: false,
+        completedDate: null
       }
     ]);
 
@@ -30,7 +49,8 @@ function App() {
       if(i === index){
         return {
           ...todo,
-          completed: !todo.completed
+          completed: !todo.completed,
+          completedDate: todo.completed ? null : new Date().toDateString()
         };
       }
       return todo;
@@ -38,6 +58,9 @@ function App() {
 
     setTodos(updatedTodos);
   }
+
+  // Remaining tasks counter
+  const remainingTasks = todos.filter(todo => !todo.completed).length;
 
   return(
     <div>
@@ -59,6 +82,8 @@ function App() {
       <button onClick={addTask}>Add task</button>
 
       <h2>Complete all your tasks today</h2>
+
+      <p>{remainingTasks} tasks remaining</p>
 
       <ul>
         {todos.map((todo, index) => (
